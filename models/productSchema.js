@@ -6,7 +6,7 @@ const productionSchema = mongoose.Schema(
             type:String,
             required:[true, "Required Field"],
             trim:true,
-            maxLength:[120,"Collection name should not be more than 120"]
+            maxLength:[120,"name should not be more than 120"]
         }    
     },
     {
@@ -14,4 +14,4 @@ const productionSchema = mongoose.Schema(
     }
 )
 
-export default mongoose.model("Callection",productionSchema)
+export default mongoose.model("Product",productionSchema)
