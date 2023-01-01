@@ -2,7 +2,7 @@ import User from "../models/User_Schema"
 import asyncHandler from "../services/asyncHandler"
 import CustomError from "../utils/customError"
 import mailHelper from "../utils/mailHelpers"
-
+import crypto from "crypto"
 
 export const cookieOptions ={
     expires:new Date(Date.now() + (60*24*3600000)),
@@ -147,15 +147,50 @@ export const signUp =asyncHandler(async(req,res)=>{
 
  /*********************************************
  * @resetPassword a function handles sign up activity
- * @route http://localhost:5000/api/auth/password/forgot
+ * @route http://localhost:5000/api/auth/password/reset/:resetToken
  * @description
  * @parameters
  * @returns
  ********************************************/ 
 
  export const resetPassword =asyncHandler(async(req,res)=>{ 
+    const {token:resetToken} = req.params
+    //this token is simple but in our database token is encrypted
+    //so in need to compare firstly we have to encrypt the password
+    const {password,confirmPassword} = req.body
+
+    const resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest('hex')
+
+    const user = await User.findOne({
+        forgotPasswordToken:resetPasswordToken,
+        forgotPasswordExpiry:{$gt: Date.now()}
+    })
+    if(!user){
+        throw new CustomError("Passed token is invalid or expired",40)
+    }
+    if(password !==confirmPassword){
+        throw new CustomError("password is not matched",)
+    }
+    user.password = password
+    user.forgotPasswordToken = undefined
+    user.forgotPasswordExpiry = undefined
+
+    await user.save()
+
+    const token = user.getJwtToken()
+    user.password = undefined
+
+    res.cookie("token",token, cookieOptions)
+    res.status(200).json({
+        success:true,
+        user
+    })
+
 
  })
+
+ //TODO: create a controller for change password
+ //middleware
 
 
 
