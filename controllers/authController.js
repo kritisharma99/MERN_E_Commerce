@@ -1,6 +1,8 @@
 import User from "../models/User_Schema"
 import asyncHandler from "../services/asyncHandler"
 import CustomError from "../utils/customError"
+import mailHelper from "../utils/mailHelpers"
+
 
 export const cookieOptions ={
     expires:new Date(Date.now() + (60*24*3600000)),
@@ -22,7 +24,7 @@ export const signUp =asyncHandler(async(req,res)=>{
         throw new CustomError('Please fill all the fields',400)
     }
     //check if user exists
-    const existingUser = await User.findOne(email)
+    const existingUser = await User.findOne({email})
     if(existingUser){
         throw new CustomError('User already exists',400)
     }
@@ -96,6 +98,65 @@ export const signUp =asyncHandler(async(req,res)=>{
     
  })
 })
+
+/*********************************************
+ * @forgotPassword a function handles sign up activity
+ * @route http://localhost:5000/api/auth/password/forgot
+ * @description
+ * @parameters
+ * @returns
+ ********************************************/
+ export const forgotPassword =asyncHandler(async(req,res)=>{
+    const {email} = req.body
+    //check email for null
+    const user = await User.findOne({email})
+    if(!user){
+        throw new CustomError("Email doesn't exixts",404)
+    }
+    const resetToken = user.generateForgotPasswordToken()
+    //save to database
+    //validateBeforesave:false because it is validate name,email eveything that thing we don't want
+    await user.save({validateBeforeSave:false})
+    //reset url
+    //http or htpps://
+    const resetUrl = `${req.protocol}://${req.get("host")}/api/auth/password/reset/${resetToken}`
+    const text = `Password rest url is \n ${resetToken}`
+    try{
+        await mailHelper({
+            email:user.email,
+            subject:"Password reset link",
+            text:text
+        })
+        res.status(200).json({
+            success : true,
+            message:`Email send to ${user.email}`
+        })
+
+    }
+    catch(error){
+        //roll back the changes 
+        user.forgotPasswordToken = undefined
+        user.forgotPasswordExpiry = undefined
+
+        await user.save({validateBeforeSave:false})
+        throw new CustomError("Email sent failure",500)
+
+    }
+
+ })
+
+ /*********************************************
+ * @resetPassword a function handles sign up activity
+ * @route http://localhost:5000/api/auth/password/forgot
+ * @description
+ * @parameters
+ * @returns
+ ********************************************/ 
+
+ export const resetPassword =asyncHandler(async(req,res)=>{ 
+
+ })
+
 
 
 
