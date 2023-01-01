@@ -95,4 +95,7 @@ export const signUp =asyncHandler(async(req,res)=>{
             message:"Logged out successfully!"
     
  })
+})
+
+
 
