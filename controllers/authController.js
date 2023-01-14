@@ -192,6 +192,22 @@ export const signUp =asyncHandler(async(req,res)=>{
  //TODO: create a controller for change password
  //middleware
 
+/*********************************************
+ * @getProfile a function handles user profile activity
+ * @route /app
+ * @description
+ * @parameters
+ * @returns
+ ********************************************/
 
+export const getProfile = asyncHandler(async(req,res,)=>{
+    const {user } = req
+    if(!user){
+        throw new CustomError("User not found",404)
 
-
+    }
+    res.status(200).json({
+        success:true,
+        user
+    })
+})
